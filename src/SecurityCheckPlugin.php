@@ -3,14 +3,20 @@
 namespace FancyGuy\Composer\SecurityCheck;
 
 use Composer\Composer;
-use Composer\Factory;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Factory;
 use Composer\IO\IOInterface;
+use Composer\Installer\InstallationManager;
+use Composer\Installer\InstallerEvent;
+use Composer\Installer\InstallerEvents;
+use Composer\Installer\NoopInstaller;
 use Composer\Plugin\Capable;
 use Composer\Plugin\CommandEvent;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreCommandRunEvent;
+use Composer\Repository\InstalledArrayRepository;
+use Composer\Repository\InstalledFilesystemRepository;
 use Composer\Script\Event as ScriptEvent;
 use Composer\Script\ScriptEvents;
 use FancyGuy\Composer\SecurityCheck\Checker\DefaultChecker;
@@ -32,9 +38,13 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
             PluginEvents::COMMAND => array(
                 array('onCommandEvent'),
             ),
+            // audit install candidates and possibly block installs
+            InstallerEvents::POST_DEPENDENCIES_SOLVING => array(
+                array('onInstallerEvent'),
+            ),
             // status
             ScriptEvents::POST_STATUS_CMD => array(
-                array('onScriptEvent')
+                array('onScriptEvent'),
             ),
             // install, remove, require, update
             ScriptEvents::POST_INSTALL_CMD => array(
@@ -46,7 +56,14 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
         );
     }
 
+    private $composer;
+
     private $io;
+
+    protected function getComposer()
+    {
+        return $this->composer;
+    }
 
     protected function getIO()
     {
@@ -55,6 +72,7 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
 
     public function activate(Composer $composer, IOInterface $io)
     {
+        $this->composer = $composer;
         $this->io = $io;
     }
 
@@ -83,6 +101,90 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
     {
     }
 
+    public function onInstallerEvent(InstallerEvent $event)
+    {
+        $operations = $event->getOperations();
+        if (!$operations) {
+            // noop
+            return;
+        }
+
+        $installedRepo = $event->getInstalledRepo();
+
+        $isFilesystemInstall = false;
+        foreach ($installedRepo->getRepositories() as $repo) {
+            if ($repo instanceof InstalledFilesystemRepository) {
+                $isFilesystemInstall = true;
+                break;
+            }
+        }
+
+        if (!$isFilesystemInstall) {
+            // noop
+            return;
+        }
+
+        $packages = array();
+        foreach ($this->getComposer()->getRepositoryManager()->getLocalRepository()->getPackages() as $package) {
+            $packages[(string) $package] = clone $package;
+        }
+        foreach ($packages as $key => $package) {
+            if ($package instanceof AliasPackage) {
+                $alias = (string) $package->getAliasOf();
+                $packages[$key] = new AliasPackage($packages[$alias], $package->getVersion(), $package->getPrettyVersion());
+            }
+        }
+        $localRepo = new InstalledArrayRepository($packages);
+
+        $im = new InstallationManager();
+        $im->addInstaller(new NoopInstaller);
+
+        foreach ($operations as $operation) {
+            // TODO: Fake passes like in Installer::extractDevPackages() break things
+            //       Ideally we should have the local repository being used in the event
+            //       For now, blindly ignore exceptions. The noop installer throws only
+            //       when a package is not installed. We'll assume it is in another context
+            try {
+                $im->execute($localRepo, $operation);
+            } catch (\Exception $e) {}
+        }
+
+        $locked = array();
+
+        foreach ($localRepo->getCanonicalPackages() as $package) {
+            if ($package instanceof AliasPackage) {
+                continue;
+            }
+
+            $locked[] = array(
+                'name' => $package->getPrettyName(),
+                'version' => $package->getPrettyVersion(),
+            );
+        }
+
+        $lockContents = array(
+            'packages' => $locked,
+            'packages-dev' => array(),
+        );
+
+        $tmplock = tempnam(sys_get_temp_dir(), 'composer_securitycheck_solver');
+        $handle = fopen($tmplock, 'w');
+        fwrite($handle, json_encode($lockContents));
+        fclose($handle);
+
+        $result = $this->auditDependencies($tmplock);
+        unlink($tmplock);
+
+        if (0 !== $result && $this->getIO()->isInteractive()) {
+            $shouldInstall = $this->getIO()->askConfirmation('<comment>Would you like to continue installing?</> [<info>no</>]: ', false);
+            if (!$shouldInstall && $this->getIO()->isInteractive()) {
+                throw new \RuntimeException('Exiting due to vulnerabilities in target installtion.');
+            }
+        }
+
+        unset($im);
+    }
+
     public function onScriptEvent(ScriptEvent $event)
     {
         $this->auditDependencies();
@@ -94,12 +196,12 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
         $diagnosticsUtil->diagnose();
     }
 
-    protected function auditDependencies()
+    protected function auditDependencies($lockFile = null)
     {
         $checker = new DefaultChecker();
         $io = $this->getIO();
 
-        $composerFile = Factory::getComposerFile();
+        $composerFile = null === $lockFile ? Factory::getComposerFile() : $lockFile;
 
         try {
             $vulnerabilities = $checker->check($composerFile);
@@ -126,5 +228,7 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
         }
 
         $io->write(sprintf('<%s>%s%s %s known vulnerabilities.</>', $style, $status, 0 === $count ? 'No' : $count, 1 === $count ? 'package has' : 'packages have'));
+
+        return $count;
     }
 }
