@@ -3,6 +3,7 @@
 namespace FancyGuy\Composer\SecurityCheck\Checker;
 
 use Composer\CaBundle\CaBundle;
+use Composer\Util\StreamContextFactory;
 use FancyGuy\Composer\SecurityCheck\Exception\HttpException;
 use FancyGuy\Composer\SecurityCheck\Exception\RuntimeException;
 use FancyGuy\Composer\SecurityCheck\SecurityCheckPlugin;
@@ -38,7 +39,7 @@ class FileGetContentsChecker extends HttpChecker
         } else {
             $opts['ssl']['cafile'] = $caPathOrFile;
         }
-        $context = stream_context_create($opts);
+        $context = StreamContextFactory::getContext($this->endpoint, $opts);
         $level = error_reporting(0);
         $body = file_get_contents($this->endpoint, 0, $context);
         error_reporting($level);
