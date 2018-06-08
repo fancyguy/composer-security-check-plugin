@@ -2,6 +2,7 @@
 
 namespace FancyGuy\Composer\SecurityCheck\Command;
 
+use Composer\Factory;
 use Composer\Command\BaseCommand;
 use FancyGuy\Composer\SecurityCheck\Checker\DefaultChecker;
 use FancyGuy\Composer\SecurityCheck\Checker\HttpCheckerInterface;
@@ -28,10 +29,12 @@ class AuditCommand extends BaseCommand
 
     protected function configure()
     {
+        $composerFile = Factory::getComposerFile();
+
         $this
             ->setName('audit')
             ->setDefinition(array(
-                new InputArgument('lockfile', InputArgument::OPTIONAL, 'The path to the composer.lock file', 'composer.lock'),
+                new InputArgument('lockfile', InputArgument::OPTIONAL, 'The path to the composer.lock file', $composerFile),
                 new InputOption('format', '', InputOption::VALUE_REQUIRED, 'The output format', 'text'),
                 new InputOption('endpoint', '', InputOption::VALUE_REQUIRED, 'The security checker server URL'),
                 new InputOption('timeout', '', InputOption::VALUE_REQUIRED, 'The HTTP timeout in seconds'),
