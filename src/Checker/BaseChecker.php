@@ -2,6 +2,8 @@
 
 namespace FancyGuy\Composer\SecurityCheck\Checker;
 
+use FancyGuy\Composer\SecurityCheck\Exception\RuntimeException;
+
 abstract class BaseChecker implements CheckerInterface
 {
     

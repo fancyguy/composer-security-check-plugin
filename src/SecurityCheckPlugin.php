@@ -3,6 +3,7 @@
 namespace FancyGuy\Composer\SecurityCheck;
 
 use Composer\Composer;
+use Composer\Factory;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
 use Composer\Plugin\Capable;
@@ -10,6 +11,9 @@ use Composer\Plugin\CommandEvent;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PluginInterface;
 use Composer\Plugin\PreCommandRunEvent;
+use Composer\Script\Event as ScriptEvent;
+use Composer\Script\ScriptEvents;
+use FancyGuy\Composer\SecurityCheck\Checker\DefaultChecker;
 use FancyGuy\Composer\SecurityCheck\Util\DiagnosticsUtility;
 
 class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberInterface
@@ -17,37 +21,36 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
 
     const VERSION = '1.0';
 
-    private $io;
-
     public static function getSubscribedEvents()
     {
         return array(
             // handle no-audit option
-            /*
             PluginEvents::PRE_COMMAND_RUN => array(
                 array('onPreCommandRunEvent', 1),
             ),
-            */
             // diagnose, show, validate
             PluginEvents::COMMAND => array(
                 array('onCommandEvent'),
             ),
             // status
-            /*
             ScriptEvents::POST_STATUS_CMD => array(
-                array('onPostStatus')
+                array('onScriptEvent')
             ),
-            */
             // install, remove, require, update
-            /*
             ScriptEvents::POST_INSTALL_CMD => array(
-                array('onPostInstall'),
+                array('onScriptEvent'),
             ),
             ScriptEvents::POST_UPDATE_CMD => array(
-                array('onPostUpdate'),
+                array('onScriptEvent'),
             ),
-            */
         );
+    }
+
+    private $io;
+
+    protected function getIO()
+    {
+        return $this->io;
     }
 
     public function activate(Composer $composer, IOInterface $io)
@@ -68,22 +71,21 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
             case 'diagnose':
                 $this->onDiagnose();
                 break;
+            case 'show':
+            case 'validate':
+                $this->auditDependencies();
+                break;
         }
     }
 
     // TODO: Figure out how to manipulate the input definition
     public function onPreCommandRunEvent(PreCommandRunEvent $event)
     {
-        
     }
 
-    public function onPostStatusCommandEvent()
+    public function onScriptEvent(ScriptEvent $event)
     {
-    }
-
-    protected function getIO()
-    {
-        return $this->io;
+        $this->auditDependencies();
     }
 
     protected function onDiagnose()
@@ -92,9 +94,37 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
         $diagnosticsUtil->diagnose();
     }
 
-    // FIXME: This needs implemented
-    private function checkService()
+    protected function auditDependencies()
     {
-        return true;
+        $checker = new DefaultChecker();
+        $io = $this->getIO();
+
+        $composerFile = Factory::getComposerFile();
+
+        try {
+            $vulnerabilities = $checker->check($composerFile);
+        } catch (ExceptionInterface $e) {
+            $io->write('<error>%s</error>', $e->getMessage());
+
+            return;
+        }
+
+        if (!is_array($vulnerabilities)) {
+            if ($io->isVerbose()) {
+                $io->write('<comment>Security Checker service returned garbage.</comment>');
+            }
+
+            return;
+        }
+
+        if ($count = count($vulnerabilities)) {
+            $status = '[CRITICAL] ';
+            $style = 'fg=red';
+        } else {
+            $status = '';
+            $style = 'info';
+        }
+
+        $io->write(sprintf('<%s>%s%s %s known vulnerabilities.</>', $style, $status, 0 === $count ? 'No' : $count, 1 === $count ? 'package has' : 'packages have'));
     }
 }
