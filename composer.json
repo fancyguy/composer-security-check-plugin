@@ -1,0 +1,36 @@
+{
+    "name": "fancyguy/composer-security-check-plugin",
+    "description": "Checks installed dependencies against SensioLabs security advisory database",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steve Buzonas",
+            "email": "steve@fancyguy.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/fancyguy/composer-security-check-plugin/issues"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": { "FancyGuy\\Composer\\SecurityCheck\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "FancyGuy\\Composer\\SecurityCheck\\Test\\": "tests/" }
+    },
+    "require": {
+        "composer-plugin-api": "^1.1"
+    },
+    "require-dev": {
+        "composer/composer": "^1.6",
+        "phpunit/phpunit": "^7.2"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "class": "FancyGuy\\Composer\\SecurityCheck\\SecurityCheckPlugin"
+    }
+}
