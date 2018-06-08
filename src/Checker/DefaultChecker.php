@@ -42,4 +42,9 @@ class DefaultChecker implements HttpCheckerInterface
     {
         return $this->checker->setEndpoint($endpoint);
     }
+
+    public function testConnection()
+    {
+        return $this->checker->testConnection();
+    }
 }

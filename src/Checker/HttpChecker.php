@@ -7,7 +7,7 @@ use FancyGuy\Composer\SecurityCheck\Exception\RuntimeException;
 abstract class HttpChecker extends BaseChecker implements HttpCheckerInterface
 {
 
-    protected $endpoint = 'https://security.sensiolabs.org/check_lock';
+    protected $endpoint = HttpCheckerInterface::DEFAULT_ENDPOINT;
     protected $timeout = 20;
 
     /**
@@ -39,6 +39,31 @@ abstract class HttpChecker extends BaseChecker implements HttpCheckerInterface
         }
 
         return array((int) $matches[1], json_decode($body, true));
+    }
+
+    public function testConnection()
+    {
+        $certFile = $this->getCertFile();
+
+        $lockContents = array(
+            'packages' => array(),
+            'packages-dev' => array(),
+        );
+
+        $tmplock = tempnam(sys_get_temp_dir(), 'composer_securitycheck_diag');
+        $handle = fopen($tmplock, 'w');
+        fwrite($handle, json_encode($lockContents));
+        fclose($handle);
+
+        list($headers, $body) = $this->doHttpCheck($tmplock, $certFile);
+
+        unlink($tmplock);
+
+        if (!(preg_match('/X-Alerts: (\d+)/', $headers, $matches) || 2 == count($matches))) {
+            throw new RuntimeException('The web service did not return alerts count.');
+        }
+
+        return true;
     }
 
     /**
