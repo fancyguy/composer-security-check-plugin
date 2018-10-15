@@ -6,6 +6,7 @@ interface HttpCheckerInterface extends CheckerInterface
 {
 
     const DEFAULT_ENDPOINT = 'https://security.sensiolabs.org/check_lock';
+    const DEFAULT_TIMEOUT = 20;
 
     /**
      * Sets the HTTP timeout in seconds

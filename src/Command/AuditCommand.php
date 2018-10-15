@@ -5,6 +5,7 @@ namespace FancyGuy\Composer\SecurityCheck\Command;
 use Composer\Factory;
 use Composer\Command\BaseCommand;
 use FancyGuy\Composer\SecurityCheck\Checker\DefaultChecker;
+use FancyGuy\Composer\SecurityCheck\Checker\HttpCheckerInterface;
 use FancyGuy\Composer\SecurityCheck\Checker\OfflineChecker;
 use FancyGuy\Composer\SecurityCheck\Exception\ExceptionInterface;
 use FancyGuy\Composer\SecurityCheck\Formatter\JsonFormatter;
@@ -23,10 +24,11 @@ class AuditCommand extends BaseCommand
         $this
             ->setName('audit')
             ->setDefinition(array(
-                new InputOption('audit-db', '', InputOption::VALUE_REQUIRED, 'The path to the advisory database'),
-                new InputOption('format', '', InputOption::VALUE_REQUIRED, 'The output format', 'text'),
-                new InputOption('endpoint', '', InputOption::VALUE_REQUIRED, 'The security checker server URL'),
-                new InputOption('timeout', '', InputOption::VALUE_REQUIRED, 'The HTTP timeout in seconds'),
+                new InputOption('audit-db', '', InputOption::VALUE_REQUIRED, 'Path to the advisory database'),
+                new InputOption('format', '', InputOption::VALUE_REQUIRED, 'Output format', 'text'),
+                new InputOption('endpoint', '', InputOption::VALUE_REQUIRED, 'Security checker server URL', HttpCheckerInterface::DEFAULT_ENDPOINT),
+                new InputOption('timeout', '', InputOption::VALUE_REQUIRED, 'HTTP timeout in seconds', HttpCheckerInterface::DEFAULT_TIMEOUT),
+                new InputOption('file', '', InputOption::VALUE_REQUIRED, 'Path to composer.lock file', './composer.lock'),
             ))
             ->setDescription('Checks security issues in your project dependencies')
             ->setHelp(<<<EOF
@@ -55,7 +57,9 @@ EOF
             }
         }
 
-        $composerFile = Factory::getComposerFile();
+        if (!$composerFile = $input->getOption('file')) {
+            $composerFile = Factory::getComposerFile();
+        }
 
         try {
             $vulnerabilities = $checker->check($composerFile);
