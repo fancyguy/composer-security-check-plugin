@@ -91,7 +91,8 @@ class SecurityCheckPlugin implements PluginInterface, Capable, EventSubscriberIn
                 break;
             case 'show':
             case 'validate':
-                $this->auditDependencies();
+                $fileArgument = $event->getInput()->getArgument('file');
+                $this->auditDependencies($fileArgument);
                 break;
         }
     }
