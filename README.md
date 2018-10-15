@@ -14,6 +14,7 @@ Run these commands to see some sample behavior:
     cd insecure-project
     composer init --name="insecure/project" --description="insecure project" -l MIT -n
     composer require symfony/symfony:2.5.2
+    composer require fancyguy/composer-security-check-plugin
     composer audit
     composer audit --format=simple
     composer audit --format=json
