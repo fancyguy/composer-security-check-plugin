@@ -1,7 +1,7 @@
 # Security Check Plugin for Composer
 Offline alternative for https://security.symfony.com/
 
-Checks are executed locally, this script does not upload your `composer.lock` file anywhere. 
+Checks are executed locally, this tool does not upload your `composer.lock` file anywhere. 
 
 For global install:
 
