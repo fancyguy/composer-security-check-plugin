@@ -15,14 +15,14 @@ Run these commands to see some sample behavior:
 
     mkdir insecure-project
     cd insecure-project
-    composer init
+    composer init --name="insecure/project" --description="insecure project" -l MIT -n
     composer require symfony/symfony:2.5.2
-    composer require zendframework/zendframework:2.3.1 
     composer audit
     composer audit --format=simple
     composer audit --format=json
     composer validate
     composer require symfony/symfony --update-with-all-dependencies
+    composer audit
 
 By default this tools downloads the checks from https://github.com/FriendsOfPHP/security-advisories. 
 You can supply a local version of this repo using
