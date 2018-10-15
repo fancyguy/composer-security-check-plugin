@@ -21,7 +21,8 @@
         "psr-4": { "FancyGuy\\Composer\\SecurityCheck\\Test\\": "tests/" }
     },
     "require": {
-        "composer-plugin-api": "^1.1"
+        "composer-plugin-api": "^1.1",
+        "symfony/yaml": "^4.1"
     },
     "require-dev": {
         "composer/composer": "^1.6",
