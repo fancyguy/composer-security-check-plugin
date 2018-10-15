@@ -1,0 +1,34 @@
+# Security Check Plugin for Composer
+Offline alternative for https://security.symfony.com/
+
+Checks are executed locally, this script does not upload your `composer.lock` file anywhere. 
+
+For global install:
+
+    composer global require fancyguy/composer-security-check-plugin
+
+For project install:
+
+    composer require fancyguy/composer-security-check-plugin
+
+Run these commands to see some sample behavior:
+
+    mkdir insecure-project
+    cd insecure-project
+    composer init
+    composer require symfony/symfony:2.5.2
+    composer require zendframework/zendframework:2.3.1 
+    composer audit
+    composer audit --format=simple
+    composer audit --format=json
+    composer validate
+    composer require symfony/symfony --update-with-all-dependencies
+
+By default this tools downloads the checks from https://github.com/FriendsOfPHP/security-advisories. 
+You can supply a local version of this repo using
+
+    composer audit --audit-db /path/to/security-advisories
+
+Inspired on: https://github.com/sensiolabs/security-checker 
+
+Alternative: https://github.com/Roave/SecurityAdvisories
