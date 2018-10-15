@@ -1,7 +1,4 @@
 # Security Check Plugin for Composer
-Offline alternative for https://security.symfony.com/
-
-Checks are executed locally, this tool does not upload your `composer.lock` file anywhere. 
 
 For global install:
 
@@ -24,7 +21,7 @@ Run these commands to see some sample behavior:
     composer require symfony/symfony --update-with-all-dependencies
     composer audit
 
-By default this tools downloads the checks from https://github.com/FriendsOfPHP/security-advisories. 
+By default this tool uses the checks from https://github.com/FriendsOfPHP/security-advisories. 
 You can supply a local version of this repo using
 
     composer audit --audit-db /path/to/security-advisories
