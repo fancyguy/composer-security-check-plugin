@@ -8,12 +8,12 @@ abstract class HttpChecker extends BaseChecker implements HttpCheckerInterface
 {
 
     protected $endpoint = HttpCheckerInterface::DEFAULT_ENDPOINT;
-    protected $timeout = 20;
+    protected $timeout = HttpCheckerInterface::DEFAULT_TIMEOUT;
 
     /**
      * {@inheritdoc}
      */
-    public function setTimeout($tiemout)
+    public function setTimeout($timeout)
     {
         $this->timeout = $timeout;
     }
