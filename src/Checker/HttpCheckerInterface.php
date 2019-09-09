@@ -5,7 +5,7 @@ namespace FancyGuy\Composer\SecurityCheck\Checker;
 interface HttpCheckerInterface extends CheckerInterface
 {
 
-    const DEFAULT_ENDPOINT = 'https://security.sensiolabs.org/check_lock';
+    const DEFAULT_ENDPOINT = 'https://security.symfony.com/check_lock';
     const DEFAULT_TIMEOUT = 20;
 
     /**

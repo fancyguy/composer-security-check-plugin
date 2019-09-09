@@ -22,7 +22,7 @@ Run these commands to see some sample behavior:
     composer require symfony/symfony --update-with-all-dependencies
     composer audit
 
-By default this tool uploads your `composer.lock` file to the [security.sensiolabs.org](https://security.sensiolabs.org/) webservice which uses the checks from https://github.com/FriendsOfPHP/security-advisories. 
+By default this tool uploads your `composer.lock` file to the [security.symfony.com](https://security.symfony.com/) webservice which uses the checks from https://github.com/FriendsOfPHP/security-advisories. 
 
 You can check offline by downloading a local version of this [repo](https://github.com/FriendsOfPHP/security-advisories) and specify its path using:
 
