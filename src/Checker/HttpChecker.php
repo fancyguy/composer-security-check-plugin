@@ -73,7 +73,7 @@ abstract class HttpChecker extends BaseChecker implements HttpCheckerInterface
 
     private function getCertFile()
     {
-        $certFile = __DIR__.'/../../res/security.sensiolabs.org.crt';
+        $certFile = __DIR__.'/../../res/security.symfony.com.crt';
 
         return $certFile;
     }
